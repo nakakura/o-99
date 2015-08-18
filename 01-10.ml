@@ -44,6 +44,29 @@ let compress list =
 
 let pack list =
   let rec aux acc current = function
-    | [] -> acc
-    | x :: t -> if x != List.hd(current) then aux (current :: acc) [x] t
-  in aux [] [List.hd(list)] List.tl(list);;
+    | [] -> []
+    | [x] -> (x :: current) :: acc
+    | x :: (y :: _ as t) -> if x = y
+      then aux acc (x :: current) t
+      else aux ((x :: current) :: acc) [] t
+  in List.rev(aux [] [] list);;
+
+let encode list = List.map (fun l -> (List.length l, List.hd l)) (pack list);;
+
+let encode2 list =
+  let rec aux count acc = function
+    | [] -> []
+    | [x] -> (count + 1, x) :: acc
+    | x :: (y :: _ as t) -> if x = y
+      then aux (count + 1) acc t
+      else aux 0 ((count + 1, x) :: acc) t
+  in List.rev(aux 0 [] list);;
+
+type 'a rle =
+    | One of 'a
+    | Many of int * 'a;;
+
+let encode_rle list =
+  List.map (fun l -> if (List.length l) = 1
+    then One(List.hd l)
+    else Many(List.length l, List.hd l)) (pack list);;
